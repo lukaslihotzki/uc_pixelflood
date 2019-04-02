@@ -1,0 +1,7 @@
+[package]
+name = "uc_pixelflood"
+version = "0.1.0"
+authors = ["Lukas Lihotzki <lukas@lihotzki.de>"]
+edition = "2018"
+
+[dependencies]
