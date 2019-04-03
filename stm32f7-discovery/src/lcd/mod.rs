@@ -214,9 +214,29 @@ impl<T: Framebuffer> Layer<T> {
         self.framebuffer.set_pixel(x, y, color);
     }
 
+    /// Returns the Color value of one pixel in the Layer
     pub fn get_pixel_color_at(&mut self, x: usize, y: usize) -> Color {
 
-        return self.framebuffer.get_pixel(x, y);
+        self.framebuffer.get_pixel(x, y)
+    }
+
+    /// Displays the new pixel value in repect of the alpha value of the 
+    /// input rbga and the current pixel color 
+    pub fn blend(&mut self, x: usize, y: usize, color: Color) {
+        let current_color = self.get_pixel_color_at(x, y);
+        let alpha = color.alpha;
+        let new_color = Color::from_rgb888(Layer::<T>::alpha_multiply(color.to_argb8888(), alpha) 
+                                        +  Layer::<T>::alpha_multiply(current_color.to_argb8888(), 255 - alpha));
+        // println!("Input: {:06x}, Current: {:06x}, new: {:06x}", color.to_rgb888(), current_color.to_rgb888(), new_color.to_rgb888());
+        self.print_point_color_at(x, y, new_color);
+        
+    }
+
+    pub fn alpha_multiply(argb: u32, alpha: u8) -> u32 {
+        // let new_rgb = argb >> 8;
+        let rb = ((argb & 0x00FF00FF) * (alpha as u32 + 1)) & 0xFF00FF00;
+        let g = ((argb & 0xFF00) * (alpha as u32 + 1)) & 0x00FF00FF;
+        (rb + g) >> 8
     }
 
     /// Creates a text writer on this layer.
