@@ -179,12 +179,7 @@ fn main() -> ! {
         color2.red, color2.green, color2.blue
     );
 
-    println!("Hello World");
-
-    // Initialize the allocator BEFORE you use it
     unsafe { ALLOCATOR.init(rt::heap_start() as usize, HEAP_SIZE) }
-
-    let _xs = vec![1, 2, 3];
 
     let mut i2c_3 = init::init_i2c_3(peripherals.I2C3, &mut rcc);
     i2c_3.test_1();
@@ -199,17 +194,6 @@ fn main() -> ! {
     // touch initialization should be done after audio initialization, because the touch
     // controller might not be ready yet
     touch::check_family_id(&mut i2c_3).unwrap();
-
-    let mut rng = Rng::init(&mut rng, &mut rcc).expect("RNG init failed");
-    print!("Random nombers: ");
-    for _ in 0..4 {
-        print!(
-            "{} ",
-            rng.poll_and_get()
-                .expect("Failed to generate random number")
-        );
-    }
-    println!("");
 
     // ethernet
     let mut ethernet_interface = ethernet::EthernetDevice::new(
@@ -241,39 +225,7 @@ fn main() -> ! {
     )
     .expect("could not bind udp socket");
 
-    let mut previous_button_state = pins.button.get();
-    let mut audio_writer = AudioWriter::new();
     loop {
-        // poll button state
-        let current_button_state = pins.button.get();
-        if current_button_state != previous_button_state {
-            if current_button_state {
-                pins.led.toggle();
-
-                // trigger the `EXTI0` interrupt
-                NVIC::pend(Interrupt::EXTI0);
-            }
-
-            previous_button_state = current_button_state;
-        }
-
-        // poll for new touch data
-        for touch in &touch::touches(&mut i2c_3).unwrap() {
-            layer_1.print_point_color_at(
-                touch.x as usize,
-                touch.y as usize,
-                Color::from_hex(0xffff00),
-            );
-        }
-
-        // poll for new audio data
-        while sai_2.bsr.read().freq().bit_is_clear() {} // fifo_request_flag
-        let data0 = sai_2.bdr.read().data().bits();
-        while sai_2.bsr.read().freq().bit_is_clear() {} // fifo_request_flag
-        let data1 = sai_2.bdr.read().data().bits();
-
-        audio_writer.set_next_col(&mut layer_1, data0, data1);
-
         // handle new ethernet packets
         if let Ok((ref mut iface, ref mut prev_ip_addr)) = ethernet_interface {
             let timestamp = Instant::from_millis(system_clock::ms() as i64);
@@ -343,15 +295,6 @@ fn main() -> ! {
                 .map(|sockets_timeout| timeout = sockets_timeout);
             // TODO await next interrupt
         }
-
-        // Initialize the SD Card on insert and deinitialize on extract.
-        if sd.card_present() && !sd.card_initialized() {
-            if let Some(i_err) = sd::init(&mut sd).err() {
-                println!("{:?}", i_err);
-            }
-        } else if !sd.card_present() && sd.card_initialized() {
-            sd::de_init(&mut sd);
-        }
     }
 }
 
@@ -411,9 +354,6 @@ fn exti0(_state: &mut Option<HStdout>) {
 fn SysTick() {
     system_clock::tick();
     // print a `.` every 500ms
-    if system_clock::ticks() % 50 == 0 && lcd::stdout::is_initialized() {
-        print!(".");
-    }
 }
 
 #[exception]
