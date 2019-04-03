@@ -26,8 +26,8 @@ use sh::hio::{self, HStdout};
 use smoltcp::{
     dhcp::Dhcpv4Client,
     socket::{
-        Socket, SocketSet, TcpSocket, TcpSocketBuffer, UdpPacketMetadata, UdpSocket,
-        UdpSocketBuffer,
+        Socket, SocketSet, TcpSocket, TcpSocketBuffer,
+        UdpPacketMetadata, UdpSocket, UdpSocketBuffer,
     },
     time::Instant,
     wire::{EthernetAddress, IpCidr, IpEndpoint, Ipv4Address},
@@ -88,43 +88,6 @@ fn main() -> ! {
         gpio_a, gpio_b, gpio_c, gpio_d, gpio_e, gpio_f, gpio_g, gpio_h, gpio_i, gpio_j, gpio_k,
     );
 
-    let bg_color = Color {
-        red: 255,
-        green: 0,
-        blue: 0,
-        alpha: 255,
-    };
-    let blue = Color {
-        red: 0,
-        green: 0,
-        blue: 255,
-        alpha: 255,
-    };
-    let green = Color {
-        red: 0,
-        green: 255,
-        blue: 0,
-        alpha: 255,
-    };
-    let red = Color {
-        red: 255,
-        green: 0,
-        blue: 0,
-        alpha: 255,
-    };
-    let black = Color {
-        red: 0,
-        green: 0,
-        blue: 0,
-        alpha: 255,
-    };
-    let grey = Color {
-        red: 127,
-        green: 127,
-        blue: 127,
-        alpha: 127,
-    };
-
     // configures the system timer to trigger a SysTick exception every second
     init::init_systick(Hz(100), &mut systick, &rcc);
     systick.enable_interrupt();
@@ -140,24 +103,6 @@ fn main() -> ! {
     layer_1.clear();
     layer_2.clear();
     lcd::init_stdout(layer_2);
-    // 480 x 272
-    for i in 0..240 {
-        for j in 0..272 {
-            layer_1.print_point_color_at(i, j, red);
-        }
-    }
-
-    let color1: Color = layer_1.get_pixel_color_at(1, 1);
-    let color2: Color = layer_1.get_pixel_color_at(400, 1);
-
-    println!(
-        "red: {}, green: {}, blue: {}",
-        color1.red, color1.green, color1.blue
-    );
-    println!(
-        "red: {}, green: {}, blue: {}",
-        color2.red, color2.green, color2.blue
-    );
 
     println!("Hello World");
 
@@ -181,7 +126,7 @@ fn main() -> ! {
     touch::check_family_id(&mut i2c_3).unwrap();
 
     let mut rng = Rng::init(&mut rng, &mut rcc).expect("RNG init failed");
-    print!("Random nombers: ");
+    print!("Random numbers: ");
     for _ in 0..4 {
         print!(
             "{} ",
@@ -218,8 +163,7 @@ fn main() -> ! {
         dhcp_rx_buffer,
         dhcp_tx_buffer,
         Instant::from_millis(system_clock::ms() as i64),
-    )
-    .expect("could not bind udp socket");
+    ).expect("could not bind udp socket");
 
     let mut previous_button_state = pins.button.get();
     let mut audio_writer = AudioWriter::new();
@@ -272,12 +216,8 @@ fn main() -> ! {
                 }
             }
 
-            let config = dhcp
-                .poll(iface, &mut sockets, timestamp)
-                .unwrap_or_else(|e| {
-                    println!("DHCP: {:?}", e);
-                    None
-                });
+            let config = dhcp.poll(iface, &mut sockets, timestamp)
+                .unwrap_or_else(|e| { println!("DHCP: {:?}", e); None});
             let ip_addr = iface.ipv4_addr().unwrap();
             if ip_addr != *prev_ip_addr {
                 println!("\nAssigned a new IPv4 address: {}", ip_addr);
@@ -288,11 +228,7 @@ fn main() -> ! {
                             println!("Default gateway: {}", default_route.via_router);
                         });
                 });
-                for dns_server in config
-                    .iter()
-                    .flat_map(|c| c.dns_servers.iter())
-                    .filter_map(|x| x.as_ref())
-                {
+                for dns_server in config.iter().flat_map(|c| c.dns_servers.iter()).filter_map(|x| x.as_ref()) {
                     println!("DNS servers: {}", dns_server);
                 }
 
