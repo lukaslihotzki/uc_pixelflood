@@ -141,43 +141,6 @@ fn main() -> ! {
     layer_2.clear();
     lcd::init_stdout(layer_2);
     // 480 x 272
-    for i in 0..480 {
-        for j in 0..272 {
-            layer_1.print_point_color_at(i, j, red);
-        }
-    }
-
-    let color1: Color = layer_1.get_pixel_color_at(1, 1);
-    println!(
-        "red: {}, green: {}, blue: {}",
-        color1.red, color1.green, color1.blue
-    );
-
-    for x in 0..6 {
-        for i in 0..480 {
-            for j in 0..272 {
-                layer_1.blend(
-                    i,
-                    j,
-                    Color {
-                        red: 0,
-                        green: 0,
-                        blue: 255,
-                        alpha: 100,
-                    },
-                );
-            }
-        }
-        let color1: Color = layer_1.get_pixel_color_at(1, 1);
-        println!("{:06x}", color1.to_rgb888());
-    }
-
-    let color2: Color = layer_1.get_pixel_color_at(400, 1);
-
-    println!(
-        "red: {}, green: {}, blue: {}",
-        color2.red, color2.green, color2.blue
-    );
 
     unsafe { ALLOCATOR.init(rt::heap_start() as usize, HEAP_SIZE) }
 
@@ -225,7 +188,47 @@ fn main() -> ! {
     )
     .expect("could not bind udp socket");
 
+    let mut rng = Rng::init(&mut rng, &mut rcc).expect("RNG init failed");
+
+    for i in 1..10000 {
+        print!(".");
+    }
+
     loop {
+        let rng_color = rng
+            .poll_and_get()
+            .expect("Failed to generate random number")
+            & 0xFFFFFF;
+
+        for i in 0..480 {
+            for j in 0..272 {
+                layer_1.print_point_color_at(i, j, Color::from_rgb888(rng_color));
+            }
+        }
+
+        let color1: Color = layer_1.get_pixel_color_at(1, 1);
+        println!("{:06x}", color1.to_rgb888());
+
+        for x in 0..6 {
+            for i in 0..480 {
+                for j in 0..272 {
+                    layer_1.blend(
+                        i,
+                        j,
+                        Color {
+                            red: 0,
+                            green: 0,
+                            blue: 255,
+                            alpha: (i as u8),
+                        },
+                    );
+                }
+            }
+            let color1: Color = layer_1.get_pixel_color_at(1, 1);
+            println!("{:06x}", color1.to_rgb888());
+        }
+        println!("------------");
+
         // handle new ethernet packets
         if let Ok((ref mut iface, ref mut prev_ip_addr)) = ethernet_interface {
             let timestamp = Instant::from_millis(system_clock::ms() as i64);
