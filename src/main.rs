@@ -141,19 +141,39 @@ fn main() -> ! {
     layer_2.clear();
     lcd::init_stdout(layer_2);
     // 480 x 272
-    for i in 0..240 {
+    for i in 0..480 {
         for j in 0..272 {
             layer_1.print_point_color_at(i, j, red);
         }
     }
 
     let color1: Color = layer_1.get_pixel_color_at(1, 1);
-    let color2: Color = layer_1.get_pixel_color_at(400, 1);
-
     println!(
         "red: {}, green: {}, blue: {}",
         color1.red, color1.green, color1.blue
     );
+
+    for x in 0..6 {
+        for i in 0..480 {
+            for j in 0..272 {
+                layer_1.blend(
+                    i,
+                    j,
+                    Color {
+                        red: 0,
+                        green: 0,
+                        blue: 255,
+                        alpha: 100,
+                    },
+                );
+            }
+        }
+        let color1: Color = layer_1.get_pixel_color_at(1, 1);
+        println!("{:06x}", color1.to_rgb888());
+    }
+
+    let color2: Color = layer_1.get_pixel_color_at(400, 1);
+
     println!(
         "red: {}, green: {}, blue: {}",
         color2.red, color2.green, color2.blue
