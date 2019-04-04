@@ -177,18 +177,6 @@ fn main() -> ! {
         println!("ethernet init failed: {:?}", e);
     };
 
-    let mut sockets = SocketSet::new(Vec::new());
-    let dhcp_rx_buffer = UdpSocketBuffer::new([UdpPacketMetadata::EMPTY; 1], vec![0; 1500]);
-    let dhcp_tx_buffer = UdpSocketBuffer::new([UdpPacketMetadata::EMPTY; 1], vec![0; 3000]);
-
-    let mut dhcp = Dhcpv4Client::new(
-        &mut sockets,
-        dhcp_rx_buffer,
-        dhcp_tx_buffer,
-        Instant::from_millis(system_clock::ms() as i64),
-    )
-    .expect("could not bind udp socket");
-
     let mut rng = Rng::init(&mut rng, &mut rcc).expect("RNG init failed");
 
     for i in 1..10000 {
