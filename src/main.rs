@@ -177,6 +177,8 @@ fn main() -> ! {
         println!("ethernet init failed: {:?}", e);
     };
 
+    let mut sockets = SocketSet::new(Vec::new());
+
     let mut rng = Rng::init(&mut rng, &mut rcc).expect("RNG init failed");
 
     for i in 1..10000 {
