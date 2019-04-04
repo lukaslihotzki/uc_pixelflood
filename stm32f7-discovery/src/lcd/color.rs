@@ -13,22 +13,22 @@ pub struct Color {
 
 impl Color {
     /// Creates a color from the passed RGB values. The alpha channel is set to 255 (opaque).
-    pub fn rgb(red: u8, green: u8, blue: u8) -> Color {
+    pub const fn rgb(red: u8, green: u8, blue: u8) -> Color {
         Self::rgba(red, green, blue, 255)
     }
 
     /// Converts the color to RGB. The alpha channel is ignored.
-    pub fn to_rgb(&self) -> u32 {
+    pub fn to_rgb(self) -> u32 {
         (u32::from(self.red) << 16) | (u32::from(self.green) << 8) | u32::from(self.blue)
     }
 
     /// Creates a color from the passed values.
-    pub fn rgba(red: u8, green: u8, blue: u8, alpha: u8) -> Color {
+    pub const fn rgba(red: u8, green: u8, blue: u8, alpha: u8) -> Color {
         Color {
-            red: red,
-            green: green,
-            blue: blue,
-            alpha: alpha,
+            red,
+            green,
+            blue,
+            alpha,
         }
     }
 
@@ -44,7 +44,7 @@ impl Color {
     }
 
     /// Converts the color to RGB. The alpha channel is ignored.
-    pub fn to_rgb888(&self) -> u32 {
+    pub fn to_rgb888(self) -> u32 {
         self.to_rgb()
     }
 
@@ -54,12 +54,12 @@ impl Color {
     }
 
     /// Converts the color to ARGB.
-    pub fn to_argb8888(&self) -> u32 {
+    pub fn to_argb8888(self) -> u32 {
         (u32::from(self.alpha) << 24) | self.to_rgb888()
     }
 
     /// Creates a color from the passed ARGB value.
-    pub fn from_argb8888(color: u32) -> Color {
+    pub const fn from_argb8888(color: u32) -> Color {
         Color {
             red: (color >> 16) as u8,
             green: (color >> 8) as u8,
@@ -69,7 +69,7 @@ impl Color {
     }
 
     /// Converts the color to ARGB1555.
-    pub fn to_argb1555(&self) -> u16 {
+    pub fn to_argb1555(self) -> u16 {
         (u16::from(self.alpha) & 0x80) << 8
             | (u16::from(self.red) & 0xf8) << 7
             | (u16::from(self.green) & 0xf8) << 2
@@ -77,7 +77,7 @@ impl Color {
     }
 
     /// Creates a color from the passed ARGB1555 value.
-    pub fn from_argb1555(color: u16) -> Color {
+    pub const fn from_argb1555(color: u16) -> Color {
         Color {
             alpha: ((color >> 8) & 0x80) as u8,
             red: ((color >> 7) & 0xf8) as u8,

@@ -97,7 +97,7 @@ pub struct FramebufferArgb8888 {
 }
 
 impl FramebufferArgb8888 {
-    const fn new(base_addr: usize) -> Self {
+    fn new(base_addr: usize) -> Self {
         Self { base_addr }
     }
 }
@@ -128,7 +128,7 @@ pub struct FramebufferAl88 {
 }
 
 impl FramebufferAl88 {
-    const fn new(base_addr: usize) -> Self {
+    fn new(base_addr: usize) -> Self {
         Self { base_addr }
     }
 }
@@ -137,7 +137,7 @@ impl Framebuffer for FramebufferAl88 {
     fn set_pixel(&mut self, x: usize, y: usize, color: Color) {
         let pixel = y * WIDTH + x;
         let pixel_ptr = (self.base_addr + pixel * LAYER_2_OCTETS_PER_PIXEL) as *mut u16;
-        unsafe { ptr::write_volatile(pixel_ptr, u16::from(color.alpha) << 8 | u16::from(color.red)) };
+        unsafe { ptr::write_volatile(pixel_ptr, (color.alpha as u16) << 8 | 0xff) };
     }
     fn get_pixel(&mut self, x: usize, y: usize) -> Color {
         return Color{red: 0, green: 0, blue: 0, alpha: 0}
@@ -155,7 +155,7 @@ impl<T: Framebuffer> Layer<T> {
     /// Useful for testing.
     pub fn horizontal_stripes(&mut self) {
         let colors = [
-            0xff_ff_ff, 0xcc_cc_cc, 0x99_99_99, 0x66_66_66, 0x33_33_33, 0x00_00_00, 0xff_00_00, 0x00_00_ff,
+            0xffffff, 0xcccccc, 0x999999, 0x666666, 0x333333, 0x0, 0xff0000, 0x0000ff,
         ];
 
         // horizontal stripes
@@ -175,7 +175,7 @@ impl<T: Framebuffer> Layer<T> {
     /// Useful for testing.
     pub fn vertical_stripes(&mut self) {
         let colors = [
-            0xcc_cc_cc, 0x99_99_99, 0x66_66_66, 0x33_33_33, 0x00_00_00, 0xff_00_00, 0x00_00_ff, 0xff_ff_ff,
+            0xcccccc, 0x999999, 0x666666, 0x333333, 0x0, 0xff0000, 0x0000ff, 0xffffff,
         ];
 
         // vertical stripes
@@ -203,7 +203,7 @@ impl<T: Framebuffer> Layer<T> {
 
     /// Sets the pixel at the specified coordinates to white.
     pub fn print_point_at(&mut self, x: usize, y: usize) {
-        self.print_point_color_at(x, y, Color::from_hex(0xff_ff_ff));
+        self.print_point_color_at(x, y, Color::from_hex(0xffffff));
     }
 
     /// Sets the pixel at the specified coordinates to the specified color.
@@ -258,7 +258,7 @@ pub struct AudioWriter {
 
 impl AudioWriter {
     /// Creates a new audio writer starting at the left edge of the screen.
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         AudioWriter {
             next_pixel: 0,
             next_col: 0,
@@ -329,9 +329,6 @@ pub struct TextWriter<'a, T: Framebuffer + 'a> {
 impl<'a, T: Framebuffer> TextWriter<'a, T> {
     fn newline(&mut self) {
         self.y_pos += 8;
-        self.carriage_return()
-    }
-    fn carriage_return(&mut self) {
         self.x_pos = 0;
         if self.y_pos >= HEIGHT {
             self.y_pos = 0;
@@ -347,9 +344,6 @@ impl<'a, T: Framebuffer> fmt::Write for TextWriter<'a, T> {
         for c in s.chars() {
             if c == '\n' {
                 self.newline();
-                continue;
-            } else if c == '\r' {
-                self.carriage_return();
                 continue;
             }
             match c {
