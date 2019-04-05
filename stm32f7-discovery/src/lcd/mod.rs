@@ -139,6 +139,7 @@ impl Framebuffer for FramebufferAl88 {
         let pixel_ptr = (self.base_addr + pixel * LAYER_2_OCTETS_PER_PIXEL) as *mut u16;
         unsafe { ptr::write_volatile(pixel_ptr, u16::from(color.alpha) << 8 | u16::from(color.red)) };
     }
+    // Not implemented
     fn get_pixel(&mut self, x: usize, y: usize) -> Color {
         return Color{red: 0, green: 0, blue: 0, alpha: 0}
     }
