@@ -228,24 +228,24 @@ fn main() -> ! {
 fn poll_socket(socket: &mut Socket) -> Result<(), smoltcp::Error> {
     match socket {
         &mut Socket::Tcp(ref mut socket) => match socket.local_endpoint().port {
-            15 => {
+            1234 => {
                 if !socket.may_recv() {
                     return Ok(());
                 }
                 let reply = socket.recv(|data| {
-                    println!("Recv");
                     if data.len() > 0 {
-                        let mut reply = Vec::from("tcp: ");
+                        /*let mut reply = Vec::from("tcp: ");
                         let start_index = reply.len();
                         reply.extend_from_slice(data);
                         reply[start_index..(start_index + data.len() - 1)].reverse();
-                        (data.len(), Some(reply))
+                        (data.len(), Some(reply))*/
+                        (data.len(), if data[0] == b'S' { 1 } else { 0 })
                     } else {
-                        (data.len(), None)
+                        (data.len(), 0)
                     }
                 })?;
-                if let Some(reply) = reply {
-                    assert_eq!(socket.send_slice(&reply)?, reply.len());
+                if reply == 1 {
+                    socket.send_slice(b"SIZE 480 272\n");
                 }
             }
             _ => {}
