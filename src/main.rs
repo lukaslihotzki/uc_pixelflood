@@ -236,7 +236,8 @@ fn main() -> ! {
                     Ok(socket_changed) => {
                         if socket_changed {
                             for mut socket in sockets.iter_mut() {
-                                poll_socket(&mut socket, &mut parser).expect("socket poll failed");
+                                poll_socket(&mut socket, &mut parser, &mut layer_1)
+                                    .expect("socket poll failed");
                             }
                         }
                     }
@@ -286,11 +287,14 @@ struct ParserCallback {
 
 impl ParserCallback {
     fn size(&mut self) {
-        self.reply = b"SIZE 480 272\n"
+        self.reply = b"SIZE x = 480, y = 272\n"
     }
 
     fn help(&mut self) {
-        self.reply = b"uc_pixelflood\n"
+        self.reply = b"Type PX x y rrggbb to display color rrggbb on Pixel x y.\n
+						Type PX x y rrggbbaa to blend a color over the current color.\n
+						Type SIZE to get the resolution of the Display\n
+						Type HELP to get this help\n"
     }
 
     fn set(&mut self, x: u16, y: u16, rgb: u32) {
@@ -471,7 +475,7 @@ impl Parser {
 fn poll_socket(
     socket: &mut Socket,
     parser: &mut Parser,
-    layer: stm32f7_discovery::lcd::Layer<stm32f7_discovery::lcd::FramebufferArgb8888>,
+    layer: &mut stm32f7_discovery::lcd::Layer<stm32f7_discovery::lcd::FramebufferArgb8888>,
 ) -> Result<(), smoltcp::Error> {
     match socket {
         &mut Socket::Tcp(ref mut socket) => match socket.local_endpoint().port {
