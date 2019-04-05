@@ -468,7 +468,11 @@ impl Parser {
     }
 }
 
-fn poll_socket(socket: &mut Socket, parser: &mut Parser) -> Result<(), smoltcp::Error> {
+fn poll_socket(
+    socket: &mut Socket,
+    parser: &mut Parser,
+    layer: stm32f7_discovery::lcd::Layer<stm32f7_discovery::lcd::FramebufferArgb8888>,
+) -> Result<(), smoltcp::Error> {
     match socket {
         &mut Socket::Tcp(ref mut socket) => match socket.local_endpoint().port {
             1234 => {
@@ -477,9 +481,9 @@ fn poll_socket(socket: &mut Socket, parser: &mut Parser) -> Result<(), smoltcp::
                 }
                 let reply = socket.recv(|data| {
                     if data.len() > 0 {
-                        let mut cb = ParserCallback { reply: b"" };
+                        let mut cb = ParserCallback { reply: b"", layer };
                         for a in data.iter() {
-                            parser.parseByte(*a, &mut cb)
+                            parser.parse_byte(*a, &mut cb)
                         }
                         (data.len(), cb.reply)
                     } else {
