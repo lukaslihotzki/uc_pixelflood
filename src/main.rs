@@ -236,6 +236,195 @@ fn main() -> ! {
     loop {}
 }
 
+enum State {
+    Start = 0,
+    Px1 = 1,
+    Px2 = 2,
+    Px3 = 3,
+    Px4 = 4,
+    Px5 = 5,
+    Px6 = 6,
+    Px7 = 7,
+    Px8 = 8,
+    Size1 = 9,
+    Size2 = 10,
+    Size3 = 11,
+    Size4 = 12,
+    Size5 = 13,
+    Help1 = 14,
+    Help2 = 15,
+    Help3 = 16,
+    Help4 = 17,
+    Help5 = 18,
+    Invalid = 31,
+}
+
+struct Parser {
+    state: State,
+    x: u16,
+    y: u16,
+    color: u32,
+}
+
+struct ParserCallback {
+    reply: &'static [u8],
+}
+
+impl ParserCallback {
+    fn size(&mut self) {
+        self.reply = b"SIZE 480 272\n"
+    }
+
+    fn help(&mut self) {
+        self.reply = b"uc_pixelflood\n"
+    }
+
+    fn set(&mut self, x: u16, y: u16, rgb: u32) {
+        println!("set {} {} {:06x}", x, y, rgb);
+    }
+
+    fn blend(&mut self, x: u16, y: u16, rgba: u32) {
+        println!("blend {} {} {:06x}", x, y, rgba);
+    }
+}
+
+impl Parser {
+    fn parseByte(&mut self, a: u8, cb: &mut ParserCallback) {
+        use State::*;
+
+        self.state = match self.state {
+            Start => match a {
+                b'P' => Px1,
+                b'S' => Size1,
+                b'H' => Help1,
+                _ => Invalid,
+            },
+            Px1 => match a {
+                b'X' => Px2,
+                _ => Invalid,
+            },
+            Px2 => match a {
+                b' ' => Px3,
+                _ => Invalid,
+            },
+            Px3 => match a {
+                b'0'..=b'9' => {
+                    self.x = self.x * 10 + (a - b'0') as u16;
+                    if self.x < 480 {
+                        Px3
+                    } else {
+                        Invalid
+                    }
+                }
+                b' ' => Px4,
+                _ => Invalid,
+            },
+            Px4 => match a {
+                b'0'..=b'9' => {
+                    self.y = self.y * 10 + (a - b'0') as u16;
+                    if self.y < 272 {
+                        Px4
+                    } else {
+                        Invalid
+                    }
+                }
+                b' ' => Px5,
+                _ => Invalid,
+            },
+            Px5 => {
+                let overflow = self.color >> 28 == 1;
+                match a {
+                    b'0'..=b'9' => {
+                        self.color = (self.color << 4) | (a - b'0' + 0x0) as u32;
+                        if overflow {
+                            Px7
+                        } else {
+                            Px5
+                        }
+                    }
+                    b'a'..=b'f' => {
+                        self.color = (self.color << 4) | (a - b'a' + 0xa) as u32;
+                        if overflow {
+                            Px7
+                        } else {
+                            Px5
+                        }
+                    }
+                    b'A'..=b'F' => {
+                        self.color = (self.color << 4) | (a - b'A' + 0xA) as u32;
+                        if overflow {
+                            Px7
+                        } else {
+                            Px5
+                        }
+                    }
+                    b'\r' => Px6,
+                    b'\n' => {
+                        if self.color >> 24 == 1 {
+                            cb.set(self.x, self.y, self.color);
+                            Start
+                        } else {
+                            Invalid
+                        }
+                    }
+                    _ => Invalid,
+                }
+            }
+            Px6 => match a {
+                b'\n' => {
+                    cb.set(self.x, self.y, self.color);
+                    Start
+                }
+                _ => Invalid,
+            },
+            Px7 => match a {
+                b'\r' => Px8,
+                b'\n' => {
+                    cb.blend(self.x, self.y, self.color);
+                    Start
+                }
+                _ => Invalid,
+            },
+            Px8 => match a {
+                b'\n' => {
+                    cb.blend(self.x, self.y, self.color);
+                    Start
+                }
+                _ => Invalid,
+            },
+            Help1 => match a {
+                b'E' => Help2,
+                _ => Invalid,
+            },
+            Help2 => match a {
+                b'L' => Help3,
+                _ => Invalid,
+            },
+            Help3 => match a {
+                b'P' => Help4,
+                _ => Invalid,
+            },
+            Help4 => match a {
+                b'\n' => {
+                    cb.help();
+                    Start
+                }
+                b'\r' => Help5,
+                _ => Invalid,
+            },
+            Help5 => match a {
+                b'\n' => {
+                    cb.help();
+                    Start
+                }
+                _ => Invalid,
+            },
+            Invalid => return,
+            _ => return,
+        }
+    }
+}
+
 fn poll_socket(socket: &mut Socket) -> Result<(), smoltcp::Error> {
     match socket {
         &mut Socket::Tcp(ref mut socket) => match socket.local_endpoint().port {
@@ -245,26 +434,23 @@ fn poll_socket(socket: &mut Socket) -> Result<(), smoltcp::Error> {
                 }
                 let reply = socket.recv(|data| {
                     if data.len() > 0 {
-                        /*let mut reply = Vec::from("tcp: ");
-                        let start_index = reply.len();
-                        reply.extend_from_slice(data);
-                        reply[start_index..(start_index + data.len() - 1)].reverse();
-                        (data.len(), Some(reply))*/
-                        (
-                            data.len(),
-                            if data[0] == b'S' {
-                                Some(b"SIZE 480 272\n")
-                            } else {
-                                None
-                            },
-                        )
+                        let mut cb = ParserCallback { reply: b"" };
+                        let mut p = Parser {
+                            state: State::Start,
+                            color: 1,
+                            x: 0,
+                            y: 0,
+                        };
+                        let len = data.len();
+                        for a in data {
+                            p.parseByte(*a, &mut cb)
+                        }
+                        (len, cb.reply)
                     } else {
-                        (data.len(), None)
+                        (data.len(), b"")
                     }
                 })?;
-                if let Some(reply) = reply {
-                    socket.send_slice(reply);
-                }
+                socket.send_slice(reply);
             }
             _ => {}
         },
