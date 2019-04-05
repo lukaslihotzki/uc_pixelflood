@@ -187,6 +187,13 @@ fn main() -> ! {
 
         println!("assigned {}", iface.ipv4_addr().unwrap());
 
+        let mut parser = Parser {
+            state: State::Start,
+            color: 1,
+            x: 0,
+            y: 0,
+        };
+
         // add new sockets
         let endpoint = IpEndpoint::new(iface.ipv4_addr().unwrap().into(), 1234);
 
@@ -211,6 +218,12 @@ fn main() -> ! {
                         }
                         if sockt.state() == smoltcp::socket::TcpState::Closed {
                             sockt.listen(endpoint);
+                            parser = Parser {
+                                state: State::Start,
+                                color: 1,
+                                x: 0,
+                                y: 0,
+                            };
                         }
                     }
                 }
@@ -223,7 +236,7 @@ fn main() -> ! {
                     Ok(socket_changed) => {
                         if socket_changed {
                             for mut socket in sockets.iter_mut() {
-                                poll_socket(&mut socket).expect("socket poll failed");
+                                poll_socket(&mut socket, &mut parser).expect("socket poll failed");
                             }
                         }
                     }
@@ -455,7 +468,7 @@ impl Parser {
     }
 }
 
-fn poll_socket(socket: &mut Socket) -> Result<(), smoltcp::Error> {
+fn poll_socket(socket: &mut Socket, parser: &mut Parser) -> Result<(), smoltcp::Error> {
     match socket {
         &mut Socket::Tcp(ref mut socket) => match socket.local_endpoint().port {
             1234 => {
@@ -465,17 +478,10 @@ fn poll_socket(socket: &mut Socket) -> Result<(), smoltcp::Error> {
                 let reply = socket.recv(|data| {
                     if data.len() > 0 {
                         let mut cb = ParserCallback { reply: b"" };
-                        let mut p = Parser {
-                            state: State::Start,
-                            color: 1,
-                            x: 0,
-                            y: 0,
-                        };
-                        let len = data.len();
-                        for a in data {
-                            p.parse_byte(*a, &mut cb)
+                        for a in data.iter() {
+                            parser.parseByte(*a, &mut cb)
                         }
-                        (len, cb.reply)
+                        (data.len(), cb.reply)
                     } else {
                         (data.len(), b"")
                     }
