@@ -268,6 +268,7 @@ struct Parser {
 
 struct ParserCallback {
     reply: &'static [u8],
+    layer: stm32f7_discovery::lcd::Layer<stm32f7_discovery::lcd::FramebufferArgb8888>,
 }
 
 impl ParserCallback {
@@ -280,16 +281,18 @@ impl ParserCallback {
     }
 
     fn set(&mut self, x: u16, y: u16, rgb: u32) {
-        println!("set {} {} {:06x}", x, y, rgb);
+        self.layer
+            .print_point_color_at(x as usize, y as usize, Color::from_rgb888(rgb));
     }
 
     fn blend(&mut self, x: u16, y: u16, rgba: u32) {
-        println!("blend {} {} {:06x}", x, y, rgba);
+        self.layer
+            .blend(x as usize, y as usize, Color::from_rgba8888(rgba));
     }
 }
 
 impl Parser {
-    fn parseByte(&mut self, a: u8, cb: &mut ParserCallback) {
+    fn parse_byte(&mut self, a: u8, cb: &mut ParserCallback) {
         use State::*;
 
         self.state = match self.state {
@@ -419,6 +422,33 @@ impl Parser {
                 }
                 _ => Invalid,
             },
+            Size1 => match a {
+                b'I' => Size2,
+                _ => Invalid,
+            },
+            Size2 => match a {
+                b'Z' => Size3,
+                _ => Invalid,
+            },
+            Size3 => match a {
+                b'E' => Size4,
+                _ => Invalid,
+            },
+            Size4 => match a {
+                b'\n' => {
+                    cb.size();
+                    Start
+                }
+                b'\r' => Help5,
+                _ => Invalid,
+            },
+            Size5 => match a {
+                b'\n' => {
+                    cb.size();
+                    Start
+                }
+                _ => Invalid,
+            },
             Invalid => return,
             _ => return,
         }
@@ -443,7 +473,7 @@ fn poll_socket(socket: &mut Socket) -> Result<(), smoltcp::Error> {
                         };
                         let len = data.len();
                         for a in data {
-                            p.parseByte(*a, &mut cb)
+                            p.parse_byte(*a, &mut cb)
                         }
                         (len, cb.reply)
                     } else {
