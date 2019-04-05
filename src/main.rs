@@ -309,6 +309,13 @@ impl ParserCallback {
 }
 
 impl Parser {
+    fn reset(&mut self) -> State {
+        self.x = 0;
+        self.y = 0;
+        self.color = 1;
+        return State::Start;
+    }
+
     fn parse_byte(&mut self, a: u8, cb: &mut ParserCallback) {
         use State::*;
 
@@ -382,7 +389,7 @@ impl Parser {
                     b'\n' => {
                         if self.color >> 24 == 1 {
                             cb.set(self.x, self.y, self.color);
-                            Start
+                            self.reset()
                         } else {
                             Invalid
                         }
@@ -393,7 +400,7 @@ impl Parser {
             Px6 => match a {
                 b'\n' => {
                     cb.set(self.x, self.y, self.color);
-                    Start
+                    self.reset()
                 }
                 _ => Invalid,
             },
@@ -401,14 +408,14 @@ impl Parser {
                 b'\r' => Px8,
                 b'\n' => {
                     cb.blend(self.x, self.y, self.color);
-                    Start
+                    self.reset()
                 }
                 _ => Invalid,
             },
             Px8 => match a {
                 b'\n' => {
                     cb.blend(self.x, self.y, self.color);
-                    Start
+                    self.reset()
                 }
                 _ => Invalid,
             },
