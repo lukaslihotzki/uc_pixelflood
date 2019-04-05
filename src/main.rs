@@ -250,13 +250,20 @@ fn poll_socket(socket: &mut Socket) -> Result<(), smoltcp::Error> {
                         reply.extend_from_slice(data);
                         reply[start_index..(start_index + data.len() - 1)].reverse();
                         (data.len(), Some(reply))*/
-                        (data.len(), if data[0] == b'S' { 1 } else { 0 })
+                        (
+                            data.len(),
+                            if data[0] == b'S' {
+                                Some(b"SIZE 480 272\n")
+                            } else {
+                                None
+                            },
+                        )
                     } else {
-                        (data.len(), 0)
+                        (data.len(), None)
                     }
                 })?;
-                if reply == 1 {
-                    socket.send_slice(b"SIZE 480 272\n");
+                if let Some(reply) = reply {
+                    socket.send_slice(reply);
                 }
             }
             _ => {}
