@@ -68,6 +68,16 @@ impl Color {
         }
     }
 
+    /// Creates a color from the passed RGBA value.
+    pub const fn from_rgba8888(color: u32) -> Color {
+        Color {
+            red: (color >> 24) as u8,
+            green: (color >> 16) as u8,
+            blue: (color >> 8) as u8,
+            alpha: color as u8,
+        }
+    }
+
     /// Converts the color to ARGB1555.
     pub fn to_argb1555(self) -> u16 {
         (u16::from(self.alpha) & 0x80) << 8
