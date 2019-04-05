@@ -280,12 +280,12 @@ struct Parser {
     color: u32,
 }
 
-struct ParserCallback {
+struct ParserCallback<'a> {
     reply: &'static [u8],
-    layer: stm32f7_discovery::lcd::Layer<stm32f7_discovery::lcd::FramebufferArgb8888>,
+    layer: &'a mut stm32f7_discovery::lcd::Layer<stm32f7_discovery::lcd::FramebufferArgb8888>,
 }
 
-impl ParserCallback {
+impl<'a> ParserCallback<'a> {
     fn size(&mut self) {
         self.reply = b"SIZE x = 480, y = 272\n"
     }
@@ -299,7 +299,7 @@ impl ParserCallback {
 
     fn set(&mut self, x: u16, y: u16, rgb: u32) {
         self.layer
-            .print_point_color_at(x as usize, y as usize, Color::from_rgb888(rgb));
+            .print_point_color_at(x as usize, y as usize, Color::from_rgb888(rgb & 0xffffff));
     }
 
     fn blend(&mut self, x: u16, y: u16, rgba: u32) {
