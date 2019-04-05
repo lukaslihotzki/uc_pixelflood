@@ -199,30 +199,41 @@ fn main() -> ! {
         let tcp_rx_buffer = TcpSocketBuffer::new(vec![0; ethernet::MTU]);
         let tcp_tx_buffer = TcpSocketBuffer::new(vec![0; ethernet::MTU]);
         let mut example_tcp_socket = TcpSocket::new(tcp_rx_buffer, tcp_tx_buffer);
-        example_tcp_socket.listen(endpoint).unwrap();
         sockets.add(example_tcp_socket);
-    }
 
-    loop {
-        if let Ok((ref mut iface, ref mut prev_ip_addr)) = ethernet_interface {
-            let timestamp = Instant::from_millis(system_clock::ms() as i64);
-            match iface.poll(&mut sockets, timestamp) {
-                Err(::smoltcp::Error::Exhausted) => {
-                    continue;
-                }
-                Err(::smoltcp::Error::Unrecognized) => print!("U"),
-                Err(e) => println!("Network error: {:?}", e),
-                Ok(socket_changed) => {
-                    if socket_changed {
-                        for mut socket in sockets.iter_mut() {
-                            poll_socket(&mut socket).expect("socket poll failed");
+        loop {
+            if let Ok((ref mut iface, ref mut prev_ip_addr)) = ethernet_interface {
+                let timestamp = Instant::from_millis(system_clock::ms() as i64);
+                for mut sock in sockets.iter_mut() {
+                    if let Socket::Tcp(ref mut sockt) = *sock {
+                        if sockt.state() == smoltcp::socket::TcpState::CloseWait {
+                            sockt.close();
+                        }
+                        if sockt.state() == smoltcp::socket::TcpState::Closed {
+                            sockt.listen(endpoint);
                         }
                     }
                 }
-            }
-            iface.poll_delay(&sockets, timestamp);
+                match iface.poll(&mut sockets, timestamp) {
+                    Err(::smoltcp::Error::Exhausted) => {
+                        continue;
+                    }
+                    Err(::smoltcp::Error::Unrecognized) => print!("U"),
+                    Err(e) => println!("Network error: {:?}", e),
+                    Ok(socket_changed) => {
+                        if socket_changed {
+                            for mut socket in sockets.iter_mut() {
+                                poll_socket(&mut socket).expect("socket poll failed");
+                            }
+                        }
+                    }
+                }
+                iface.poll_delay(&sockets, timestamp);
+            };
         }
     }
+
+    loop {}
 }
 
 fn poll_socket(socket: &mut Socket) -> Result<(), smoltcp::Error> {
