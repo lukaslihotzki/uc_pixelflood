@@ -179,46 +179,6 @@ fn main() -> ! {
 
     let mut sockets = SocketSet::new(Vec::new());
 
-    let mut rng = Rng::init(&mut rng, &mut rcc).expect("RNG init failed");
-
-    for i in 1..10000 {
-        print!(".");
-    }
-
-    let rng_color = rng
-        .poll_and_get()
-        .expect("Failed to generate random number")
-        & 0xFFFFFF;
-
-    for i in 0..480 {
-        for j in 0..272 {
-            layer_1.print_point_color_at(i, j, Color::from_rgb888(rng_color));
-        }
-    }
-
-    let color1: Color = layer_1.get_pixel_color_at(1, 1);
-    println!("{:06x}", color1.to_rgb888());
-
-    for x in 0..6 {
-        for i in 0..480 {
-            for j in 0..272 {
-                layer_1.blend(
-                    i,
-                    j,
-                    Color {
-                        red: 0,
-                        green: 0,
-                        blue: 255,
-                        alpha: (i as u8),
-                    },
-                );
-            }
-        }
-        let color1: Color = layer_1.get_pixel_color_at(1, 1);
-        println!("{:06x}", color1.to_rgb888());
-    }
-    println!("------------");
-
     if let Ok((ref mut iface, ref mut prev_ip_addr)) = ethernet_interface {
         iface.update_ip_addrs(|ipa| {
             *(ipa.first_mut().unwrap()) =
@@ -267,23 +227,6 @@ fn main() -> ! {
 
 fn poll_socket(socket: &mut Socket) -> Result<(), smoltcp::Error> {
     match socket {
-        &mut Socket::Udp(ref mut socket) => match socket.endpoint().port {
-            15 => loop {
-                let reply;
-                match socket.recv() {
-                    Ok((data, remote_endpoint)) => {
-                        let mut data = Vec::from(data);
-                        let len = data.len() - 1;
-                        data[..len].reverse();
-                        reply = (data, remote_endpoint);
-                    }
-                    Err(smoltcp::Error::Exhausted) => break,
-                    Err(err) => return Err(err),
-                }
-                socket.send_slice(&reply.0, reply.1)?;
-            },
-            _ => {}
-        },
         &mut Socket::Tcp(ref mut socket) => match socket.local_endpoint().port {
             15 => {
                 if !socket.may_recv() {
