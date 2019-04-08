@@ -484,6 +484,7 @@ fn poll_socket(
     match socket {
         &mut Socket::Tcp(ref mut socket) => match socket.local_endpoint().port {
             1234 => {
+                println!("{}", socket.handle().get());
                 if !socket.may_recv() {
                     return Ok(());
                 }
