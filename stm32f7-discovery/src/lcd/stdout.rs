@@ -1,16 +1,16 @@
 //! Initialize a LCD layer as standard output.
 
-use super::{FramebufferAl88, Layer, TextWriter};
+use super::{FramebufferArgb8888, Layer, TextWriter};
 use core::fmt;
 use cortex_m::interrupt;
 use spin::Mutex;
 
 static STDOUT: Stdout = Stdout(Mutex::new(None));
 
-struct Stdout<'a>(Mutex<Option<TextWriter<'a, FramebufferAl88>>>);
+struct Stdout<'a>(Mutex<Option<TextWriter<'a, FramebufferArgb8888>>>);
 
 impl<'a> Stdout<'a> {
-    fn with(&self, f: impl FnOnce(&mut Option<TextWriter<'a, FramebufferAl88>>)) {
+    fn with(&self, f: impl FnOnce(&mut Option<TextWriter<'a, FramebufferArgb8888>>)) {
         interrupt::free(|_| f(&mut self.0.lock()))
     }
 }
@@ -19,8 +19,8 @@ impl<'a> Stdout<'a> {
 ///
 /// Subsequent calls to [`print`](print) or [`println!`](println!) will then print
 /// to the layer.
-pub fn init(layer: Layer<FramebufferAl88>) {
-    static mut LAYER: Option<Layer<FramebufferAl88>> = None;
+pub fn init(layer: Layer<FramebufferArgb8888>) {
+    static mut LAYER: Option<Layer<FramebufferArgb8888>> = None;
 
     STDOUT.with(|stdout| {
         let layer = unsafe { LAYER.get_or_insert_with(|| layer) };
