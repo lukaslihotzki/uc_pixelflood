@@ -473,7 +473,7 @@ fn poll_socket(
                 if !socket.may_recv() {
                     return Ok(());
                 }
-                let mut p = &mut parser[socket.handle().get()];
+                let p = &mut parser[socket.handle().get()];
                 let reply = socket.recv(|data| {
                     if data.len() > 0 {
                         let mut cb = ParserCallback { reply: b"", layer };
