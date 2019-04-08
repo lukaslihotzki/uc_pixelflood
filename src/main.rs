@@ -217,7 +217,7 @@ fn main() -> ! {
                             sockt.listen(endpoint);
                             parser = Parser {
                                 state: State::Start,
-                                color: 1,
+                                color: 8,
                                 x: 0,
                                 y: 0,
                             };
