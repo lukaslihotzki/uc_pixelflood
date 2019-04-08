@@ -98,11 +98,6 @@ pub fn init<'a>(ltdc: &'a mut LTDC, rcc: &mut RCC) -> Lcd<'a> {
         w.whsppos().bits(WIDTH + 41 + 13 - 1); // window_horizontal_stop_position
         w
     });
-    ltdc.l2whpcr.modify(|_, w| unsafe {
-        w.whstpos().bits(0 + 41 + 13); // window_horizontal_start_position
-        w.whsppos().bits(WIDTH + 41 + 13 - 1); // window_horizontal_stop_position
-        w
-    });
 
     // configure vertical start and stop position
     ltdc.l1wvpcr.modify(|_, w| unsafe {
@@ -110,15 +105,9 @@ pub fn init<'a>(ltdc: &'a mut LTDC, rcc: &mut RCC) -> Lcd<'a> {
         w.wvsppos().bits(HEIGHT + 10 + 2 - 1); // window_vertical_stop_position
         w
     });
-    ltdc.l2wvpcr.modify(|_, w| unsafe {
-        w.wvstpos().bits(0 + 10 + 2); // window_vertical_start_position
-        w.wvsppos().bits(HEIGHT + 10 + 2 - 1); // window_vertical_stop_position
-        w
-    });
 
     // specify pixed format
     ltdc.l1pfcr.modify(|_, w| unsafe { w.pf().bits(0b000) }); // set_pixel_format to ARGB8888
-    ltdc.l2pfcr.modify(|_, w| unsafe { w.pf().bits(0b111) }); // set_pixel_format to AL88
 
     // configure default color values
     ltdc.l1dccr.modify(|_, w| unsafe {
@@ -128,25 +117,12 @@ pub fn init<'a>(ltdc: &'a mut LTDC, rcc: &mut RCC) -> Lcd<'a> {
         w.dcblue().bits(0);
         w
     });
-    ltdc.l2dccr.modify(|_, w| unsafe {
-        w.dcalpha().bits(0);
-        w.dcred().bits(0);
-        w.dcgreen().bits(0);
-        w.dcblue().bits(0);
-        w
-    });
 
     // specify constant alpha value
     ltdc.l1cacr.modify(|_, w| unsafe { w.consta().bits(255) }); // constant_alpha
-    ltdc.l2cacr.modify(|_, w| unsafe { w.consta().bits(255) }); // constant_alpha
 
     // specify blending factors
     ltdc.l1bfcr.modify(|_, w| unsafe {
-        w.bf1().bits(0b110); // set_blending_factor_1 to PixelAlphaTimesConstantAlpha
-        w.bf2().bits(0b111); // set_blending_factor_2 to OneMinusPixelAlphaTimesConstantAlpha
-        w
-    });
-    ltdc.l2bfcr.modify(|_, w| unsafe {
         w.bf1().bits(0b110); // set_blending_factor_1 to PixelAlphaTimesConstantAlpha
         w.bf2().bits(0b111); // set_blending_factor_2 to OneMinusPixelAlphaTimesConstantAlpha
         w
@@ -155,8 +131,6 @@ pub fn init<'a>(ltdc: &'a mut LTDC, rcc: &mut RCC) -> Lcd<'a> {
     // configure color frame buffer start address
     ltdc.l1cfbar
         .modify(|_, w| unsafe { w.cfbadd().bits(LAYER_1_START as u32) });
-    ltdc.l2cfbar
-        .modify(|_, w| unsafe { w.cfbadd().bits(LAYER_2_START as u32) });
 
     // configure color frame buffer line length and pitch
     ltdc.l1cfblr.modify(|_, w| unsafe {
@@ -164,21 +138,13 @@ pub fn init<'a>(ltdc: &'a mut LTDC, rcc: &mut RCC) -> Lcd<'a> {
         w.cfbll().bits(WIDTH * LAYER_1_OCTETS_PER_PIXEL + 3); // line_length
         w
     });
-    ltdc.l2cfblr.modify(|_, w| unsafe {
-        w.cfbp().bits(WIDTH * LAYER_2_OCTETS_PER_PIXEL); // pitch
-        w.cfbll().bits(WIDTH * LAYER_2_OCTETS_PER_PIXEL + 3); // line_length
-        w
-    });
 
     // configure frame buffer line number
     ltdc.l1cfblnr
         .modify(|_, w| unsafe { w.cfblnbr().bits(HEIGHT) }); // line_number
-    ltdc.l2cfblnr
-        .modify(|_, w| unsafe { w.cfblnbr().bits(HEIGHT) }); // line_number
 
     // enable layers
     ltdc.l1cr.modify(|_, w| w.len().set_bit());
-    ltdc.l2cr.modify(|_, w| w.len().set_bit());
 
     // reload shadow registers
     ltdc.srcr.modify(|_, w| w.imr().set_bit()); // IMMEDIATE_RELOAD
