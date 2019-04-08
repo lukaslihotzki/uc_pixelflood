@@ -40,6 +40,9 @@ branch = "dhcp"
 default-features = false
 features = ["alloc", "socket-raw", "socket-udp", "socket-tcp", "socket-icmp", "proto-ipv4", "proto-dhcpv4"]
 
+[patch."https://github.com/astro/smoltcp.git".smoltcp]
+path = "smoltcp"
+
 
 [profile.dev]
 codegen-units = 1 # better optimizations
