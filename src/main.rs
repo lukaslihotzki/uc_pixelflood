@@ -189,21 +189,17 @@ fn main() -> ! {
             color: 8,
             x: 0,
             y: 0,
-        }];
+        }; 8];
 
         // add new sockets
         let endpoint = IpEndpoint::new(iface.ipv4_addr().unwrap().into(), 1234);
 
-        let udp_rx_buffer = UdpSocketBuffer::new(vec![UdpPacketMetadata::EMPTY; 3], vec![0u8; 256]);
-        let udp_tx_buffer = UdpSocketBuffer::new(vec![UdpPacketMetadata::EMPTY; 1], vec![0u8; 128]);
-        let mut example_udp_socket = UdpSocket::new(udp_rx_buffer, udp_tx_buffer);
-        example_udp_socket.bind(endpoint).unwrap();
-        sockets.add(example_udp_socket);
-
-        let tcp_rx_buffer = TcpSocketBuffer::new(vec![0; ethernet::MTU]);
-        let tcp_tx_buffer = TcpSocketBuffer::new(vec![0; ethernet::MTU]);
-        let mut example_tcp_socket = TcpSocket::new(tcp_rx_buffer, tcp_tx_buffer);
-        sockets.add(example_tcp_socket);
+        for i in { 0..8 } {
+            let tcp_rx_buffer = TcpSocketBuffer::new(vec![0; ethernet::MTU]);
+            let tcp_tx_buffer = TcpSocketBuffer::new(vec![0; ethernet::MTU]);
+            let mut example_tcp_socket = TcpSocket::new(tcp_rx_buffer, tcp_tx_buffer);
+            sockets.add(example_tcp_socket);
+        }
 
         loop {
             if let Ok((ref mut iface, ref mut prev_ip_addr)) = ethernet_interface {
@@ -215,7 +211,7 @@ fn main() -> ! {
                         }
                         if sockt.state() == smoltcp::socket::TcpState::Closed {
                             sockt.listen(endpoint);
-                            parser[0] = Parser {
+                            parser[sockt.handle().get()] = Parser {
                                 state: State::Start,
                                 color: 8,
                                 x: 0,
@@ -247,6 +243,7 @@ fn main() -> ! {
     loop {}
 }
 
+#[derive(Copy, Clone)]
 enum State {
     Start = 0,
     Px1 = 1,
@@ -270,6 +267,7 @@ enum State {
     Invalid = 31,
 }
 
+#[derive(Copy, Clone)]
 struct Parser {
     state: State,
     x: u16,
@@ -487,7 +485,7 @@ fn poll_socket(
                 if !socket.may_recv() {
                     return Ok(());
                 }
-                let mut p = &mut parser[0];
+                let mut p = &mut parser[socket.handle().get()];
                 let reply = socket.recv(|data| {
                     if data.len() > 0 {
                         let mut cb = ParserCallback { reply: b"", layer };
