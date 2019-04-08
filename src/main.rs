@@ -135,11 +135,8 @@ fn main() -> ! {
     pins.backlight.set(true);
 
     let mut layer_1 = lcd.layer_1().unwrap();
-    let mut layer_2 = lcd.layer_2().unwrap();
-
     layer_1.clear();
-    layer_2.clear();
-    lcd::init_stdout(layer_2);
+    lcd::init_stdout(lcd.layer_1().unwrap());
     // 480 x 272
 
     unsafe { ALLOCATOR.init(rt::heap_start() as usize, HEAP_SIZE) }
