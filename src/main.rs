@@ -284,7 +284,7 @@ struct ParserCallback<'a> {
 
 impl<'a> ParserCallback<'a> {
     fn size(&mut self) {
-        self.reply = b"SIZE x = 480, y = 272\n"
+        self.reply = b"SIZE 480 272\n"
     }
 
     fn help(&mut self) {
