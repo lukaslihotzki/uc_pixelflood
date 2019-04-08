@@ -186,7 +186,7 @@ fn main() -> ! {
 
         let mut parser = Parser {
             state: State::Start,
-            color: 1,
+            color: 8,
             x: 0,
             y: 0,
         };
@@ -309,7 +309,7 @@ impl Parser {
     fn reset(&mut self) -> State {
         self.x = 0;
         self.y = 0;
-        self.color = 1;
+        self.color = 8;
         return State::Start;
     }
 
@@ -356,7 +356,7 @@ impl Parser {
                 _ => Invalid,
             },
             Px5 => {
-                let overflow = self.color >> 28 == 1;
+                let overflow = self.color >> 31 != 0;
                 match a {
                     b'0'..=b'9' => {
                         self.color = (self.color << 4) | (a - b'0' + 0x0) as u32;
@@ -384,7 +384,7 @@ impl Parser {
                     }
                     b'\r' => Px6,
                     b'\n' => {
-                        if self.color >> 24 == 1 {
+                        if self.color >> 24 == 8 {
                             cb.set(self.x, self.y, self.color);
                             self.reset()
                         } else {
