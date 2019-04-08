@@ -368,7 +368,7 @@ impl<'a, T: Framebuffer> fmt::Write for TextWriter<'a, T> {
                                 alpha,
                             };
                             self.layer
-                                .print_point_color_at(self.x_pos + x, self.y_pos + y, color);
+                                .blend(self.x_pos + x, self.y_pos + y, color);
                         }
                     }
                 }
