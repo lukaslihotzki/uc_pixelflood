@@ -354,31 +354,19 @@ impl Parser {
                 _ => Invalid,
             },
             Px5 => {
-                let overflow = self.color >> 31 != 0;
+                let state_after_digit = if self.color >> 31 != 0 { Px7 } else { Px5 };
                 match a {
                     b'0'..=b'9' => {
                         self.color = (self.color << 4) | (a - b'0' + 0x0) as u32;
-                        if overflow {
-                            Px7
-                        } else {
-                            Px5
-                        }
+                        state_after_digit
                     }
                     b'a'..=b'f' => {
                         self.color = (self.color << 4) | (a - b'a' + 0xa) as u32;
-                        if overflow {
-                            Px7
-                        } else {
-                            Px5
-                        }
+                        state_after_digit
                     }
                     b'A'..=b'F' => {
                         self.color = (self.color << 4) | (a - b'A' + 0xA) as u32;
-                        if overflow {
-                            Px7
-                        } else {
-                            Px5
-                        }
+                        state_after_digit
                     }
                     b'\r' => Px6,
                     b'\n' => {
