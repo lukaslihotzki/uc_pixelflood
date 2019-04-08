@@ -184,12 +184,12 @@ fn main() -> ! {
 
         println!("assigned {}", iface.ipv4_addr().unwrap());
 
-        let mut parser = Parser {
+        let mut parser = [Parser {
             state: State::Start,
             color: 8,
             x: 0,
             y: 0,
-        };
+        }];
 
         // add new sockets
         let endpoint = IpEndpoint::new(iface.ipv4_addr().unwrap().into(), 1234);
@@ -215,7 +215,7 @@ fn main() -> ! {
                         }
                         if sockt.state() == smoltcp::socket::TcpState::Closed {
                             sockt.listen(endpoint);
-                            parser = Parser {
+                            parser[0] = Parser {
                                 state: State::Start,
                                 color: 8,
                                 x: 0,
@@ -478,13 +478,12 @@ impl Parser {
 
 fn poll_socket(
     socket: &mut Socket,
-    parser: &mut Parser,
+    parser: &mut [Parser],
     layer: &mut stm32f7_discovery::lcd::Layer<stm32f7_discovery::lcd::FramebufferArgb8888>,
 ) -> Result<(), smoltcp::Error> {
     match socket {
         &mut Socket::Tcp(ref mut socket) => match socket.local_endpoint().port {
             1234 => {
-                println!("{}", socket.handle().get());
                 if !socket.may_recv() {
                     return Ok(());
                 }
@@ -492,7 +491,7 @@ fn poll_socket(
                     if data.len() > 0 {
                         let mut cb = ParserCallback { reply: b"", layer };
                         for a in data.iter() {
-                            parser.parse_byte(*a, &mut cb)
+                            parser[0].parse_byte(*a, &mut cb)
                         }
                         (data.len(), cb.reply)
                     } else {
