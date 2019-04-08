@@ -487,11 +487,12 @@ fn poll_socket(
                 if !socket.may_recv() {
                     return Ok(());
                 }
+                let mut p = &mut parser[0];
                 let reply = socket.recv(|data| {
                     if data.len() > 0 {
                         let mut cb = ParserCallback { reply: b"", layer };
                         for a in data.iter() {
-                            parser[0].parse_byte(*a, &mut cb)
+                            p.parse_byte(*a, &mut cb)
                         }
                         (data.len(), cb.reply)
                     } else {
