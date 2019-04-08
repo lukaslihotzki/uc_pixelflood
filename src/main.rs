@@ -88,43 +88,6 @@ fn main() -> ! {
         gpio_a, gpio_b, gpio_c, gpio_d, gpio_e, gpio_f, gpio_g, gpio_h, gpio_i, gpio_j, gpio_k,
     );
 
-    let bg_color = Color {
-        red: 255,
-        green: 0,
-        blue: 0,
-        alpha: 255,
-    };
-    let blue = Color {
-        red: 0,
-        green: 0,
-        blue: 255,
-        alpha: 255,
-    };
-    let green = Color {
-        red: 0,
-        green: 255,
-        blue: 0,
-        alpha: 255,
-    };
-    let red = Color {
-        red: 255,
-        green: 0,
-        blue: 0,
-        alpha: 255,
-    };
-    let black = Color {
-        red: 0,
-        green: 0,
-        blue: 0,
-        alpha: 255,
-    };
-    let grey = Color {
-        red: 127,
-        green: 127,
-        blue: 127,
-        alpha: 127,
-    };
-
     // configures the system timer to trigger a SysTick exception every second
     init::init_systick(Hz(100), &mut systick, &rcc);
     systick.enable_interrupt();
@@ -144,10 +107,6 @@ fn main() -> ! {
     let mut i2c_3 = init::init_i2c_3(peripherals.I2C3, &mut rcc);
     i2c_3.test_1();
     i2c_3.test_2();
-
-    nvic.enable(Interrupt::EXTI0);
-
-    let mut sd = sd::Sd::new(&mut sdmmc, &mut rcc, &pins.sdcard_present);
 
     init::init_sai_2(&mut sai_2, &mut rcc);
     init::init_wm8994(&mut i2c_3).expect("WM8994 init failed");
@@ -492,12 +451,6 @@ fn poll_socket(
         _ => {}
     }
     Ok(())
-}
-
-interrupt!(EXTI0, exti0, state: Option<HStdout> = None);
-
-fn exti0(_state: &mut Option<HStdout>) {
-    println!("Interrupt fired! This means that the button was pressed.");
 }
 
 #[exception]
