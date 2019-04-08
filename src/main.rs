@@ -30,7 +30,7 @@ use smoltcp::{
         UdpSocketBuffer,
     },
     time::Instant,
-    wire::{EthernetAddress, IpCidr, IpEndpoint, Ipv4Address},
+    wire::{EthernetAddress, IpAddress, IpCidr, IpEndpoint, Ipv4Address},
 };
 use stm32f7::stm32f7x6::{CorePeripherals, Interrupt, Peripherals};
 use stm32f7_discovery::{
@@ -150,9 +150,6 @@ fn main() -> ! {
             y: 0,
         }; 8];
 
-        // add new sockets
-        let endpoint = IpEndpoint::new(iface.ipv4_addr().unwrap().into(), 1234);
-
         for i in { 0..8 } {
             let tcp_rx_buffer = TcpSocketBuffer::new(vec![0; ethernet::MTU]);
             let tcp_tx_buffer = TcpSocketBuffer::new(vec![0; ethernet::MTU]);
@@ -169,7 +166,7 @@ fn main() -> ! {
                             sockt.close();
                         }
                         if sockt.state() == smoltcp::socket::TcpState::Closed {
-                            sockt.listen(endpoint);
+                            sockt.listen(IpEndpoint::new(IpAddress::Unspecified, 1234));
                             parser[sockt.handle().get()] = Parser {
                                 state: State::Start,
                                 color: 8,
