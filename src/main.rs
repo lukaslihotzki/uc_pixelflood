@@ -136,12 +136,9 @@ fn main() -> ! {
     let mut sockets = SocketSet::new(Vec::new());
 
     if let Ok((ref mut iface, ref mut prev_ip_addr)) = ethernet_interface {
-        iface.update_ip_addrs(|ipa| {
-            *(ipa.first_mut().unwrap()) =
-                IpCidr::new(smoltcp::wire::IpAddress::v4(192, 168, 42, 2), 24)
-        });
-
-        println!("assigned {}", iface.ipv4_addr().unwrap());
+        for &cidr in iface.ip_addrs().iter() {
+            println!("assigned {}", cidr);
+        }
 
         let mut parser = [Parser {
             state: State::Start,

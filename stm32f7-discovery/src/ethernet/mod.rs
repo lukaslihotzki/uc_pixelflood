@@ -89,7 +89,7 @@ impl<'d> EthernetDevice<'d> {
         use alloc::collections::BTreeMap;
         use smoltcp::iface::NeighborCache;
 
-        let ip_addrs = [IpCidr::new(Ipv4Address::UNSPECIFIED.into(), 0)];
+        let ip_addrs = [IpCidr::new(smoltcp::wire::IpAddress::v4(192, 168, 42, 2), 24), IpCidr::new(smoltcp::wire::IpAddress::v6(0xfdba, 0xd096, 0xaaba, 0xe95f, 0,0,0, 0x0002), 64)];
         let routes_storage = Box::leak(Box::new([None; 1]));
         let routes = Routes::new(&mut routes_storage[..]);
 

@@ -166,17 +166,29 @@ pub fn init(
         w.nise().set_bit(); // Normal interrupt summary enable
         w.rie().set_bit(); // Receive interrupt enable
         w
-    });
+		});
 
     // Initialize MAC address in ethernet MAC
-    ethernet_mac.maca0hr.modify(|_, w| {
-        #[allow(clippy::eq_op)]
-        w.maca0h().bits(0 << 8 | 0) // high register
-    });
-    ethernet_mac.maca0lr.modify(|_, w| {
-        #[allow(clippy::eq_op)]
-        w.maca0l().bits(0 << 24 | 0 << 16 | 0 << 8 | 2) // low register
-    });
+	ethernet_mac.maca0hr.modify(|_, w| {
+	    #[allow(clippy::eq_op)]
+		w.maca0h().bits(0 << 8 | 0) // high register
+	});
+	ethernet_mac.maca0lr.modify(|_, w| {
+	    #[allow(clippy::eq_op)]
+		w.maca0l().bits(0 << 24 | 0 << 16 | 0 << 8 | 2) // low register
+	});
+
+    let addr6 = smoltcp::wire::Ipv6Address::new(0xfdba, 0xd096, 0xaaba, 0xe95f, 0,0,0, 0x0002);
+	let addrb = addr6.as_bytes();
+
+    // Initialize MAC address in ethernet MAC
+	ethernet_mac.maca1hr.modify(|_, w| {
+	    w.ae().enabled();
+		w.maca1h().bits(u16::from_be_bytes([addrb[15], addrb[14]]))
+	});
+	ethernet_mac.maca1lr.modify(|_, w| {
+	    w.maca1l().bits(u32::from_be_bytes([addrb[13], 0xff, 0x33, 0x33])) // low register
+	});
 
     Ok(())
 }
