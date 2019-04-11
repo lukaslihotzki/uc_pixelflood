@@ -5,7 +5,7 @@ pub trait ParserCallback {
     fn blend(&mut self, x: u16, y: u16, rgba: u32);
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 enum State {
     Start = 0,
     Px1 = 1,
@@ -52,7 +52,7 @@ impl Parser {
         State::Start
     }
 
-    pub fn parse_byte(&mut self, a: u8, cb: &mut ParserCallback) {
+    pub fn parse_byte(&mut self, a: u8, cb: &mut ParserCallback) -> bool {
         use State::*;
 
         self.state = match self.state {
@@ -197,8 +197,9 @@ impl Parser {
                 }
                 _ => Invalid,
             },
-            Invalid => return,
-            _ => return,
-        }
+            Invalid => return false,
+        };
+
+        self.state != Invalid
     }
 }

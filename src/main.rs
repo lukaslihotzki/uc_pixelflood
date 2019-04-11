@@ -233,14 +233,23 @@ fn poll_socket(
                     if data.len() > 0 {
                         let mut cb = ParserCallback { reply: b"", layer };
                         for a in data.iter() {
-                            p.parse_byte(*a, &mut cb)
+                            if (!p.parse_byte(*a, &mut cb)) {
+                                return (data.len(), None);
+                            }
                         }
-                        (data.len(), cb.reply)
+                        (data.len(), Some(cb.reply))
                     } else {
-                        (data.len(), b"")
+                        (data.len(), Some(b""))
                     }
                 })?;
-                socket.send_slice(reply);
+                match reply {
+                    Some(x) => {
+                        socket.send_slice(x);
+                    }
+                    None => {
+                        socket.close();
+                    }
+                };
             }
             _ => {}
         },
