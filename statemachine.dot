@@ -1,0 +1,32 @@
+digraph statemach {
+	Start -> Px1 [label="'P'"];
+	Start -> Size1 [label="'S'"];
+	Start -> Help1 [label="'H'"];
+	Px1 -> Px2 [label="'X'"];
+	Px2 -> Px3 [label="' '"];
+	Px6 -> Start [label="'\\n'"] [color="red"];
+	Px7 -> Px8 [label="'\\r'"];
+	Px7 -> Start [label="'\\n'"] [color="red"];
+	Px8 -> Start [label="'\\n'"] [color="red"];
+	Help1 -> Help2 [label="'E'"];
+	Help2 -> Help3 [label="'L'"];
+	Help3 -> Help4 [label="'P'"];
+	Help4 -> Start [label="'\\n'"] [color="red"];
+	Help4 -> Help5 [label="'\\r'"];
+	Help5 -> Start [label="'\\n'"] [color="red"];
+	Size1 -> Size2 [label="'I'"];
+	Size2 -> Size3 [label="'Z'"];
+	Size3 -> Size4 [label="'E'"];
+	Size4 -> Start [label="'\\n'"] [color="red"];
+	Size4 -> Size5 [label="'\\r'"];
+	Size5 -> Start [label="'\\n'"] [color="red"];
+
+	Px3 -> Px3 [label="'0'..'9'"] [color="red"];
+	Px3 -> Px4 [label="' '"];
+	Px4 -> Px4 [label="'0'..'9'"] [color="red"];
+	Px4 -> Px5 [label="' '"];
+	Px5 -> Px5 [label="'0'..'9'|'a'..'f'|'A'..'F' no overflow"];
+	Px5 -> Start [label="'\\n'"] [color="red"];
+	Px5 -> Px6 [label="'\\r'"];
+	Px5 -> Px7 [label="'0'..'9'|'a'..'f'|'A'..'F' overflow"];
+}

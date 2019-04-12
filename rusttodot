@@ -1,0 +1,4 @@
+#!/bin/sh
+echo digraph statemach {
+sed -n "s/self.reset()/Start/;s/\\\\/\\\\\\\\/g;s/^\s*(\([^,]*\), b'\(.[^']*\)') => \(\([^,{]*\)\|\({\)[^};]*; \([^}]*\) }\),$/\t\1 -> \4\6 [label=\"'\2'\"]\5;/p" | sed "s/{;/ [color=\"red\"];/"
+echo }
