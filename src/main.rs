@@ -170,8 +170,8 @@ fn main() -> ! {
                     Err(::smoltcp::Error::Exhausted) => {
                         continue;
                     }
-                    Err(::smoltcp::Error::Unrecognized) => print!("U"),
-                    Err(e) => println!("Network error: {:?}", e),
+                    Err(::smoltcp::Error::Unrecognized) => (),
+                    Err(e) => (),
                     Ok(socket_changed) => {
                         if socket_changed {
                             for mut socket in sockets.iter_mut() {
