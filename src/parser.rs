@@ -55,22 +55,13 @@ impl Parser {
     pub fn parse_byte(&mut self, a: u8, cb: &mut ParserCallback) -> bool {
         use State::*;
 
-        self.state = match self.state {
-            Start => match a {
-                b'P' => Px1,
-                b'S' => Size1,
-                b'H' => Help1,
-                _ => Invalid,
-            },
-            Px1 => match a {
-                b'X' => Px2,
-                _ => Invalid,
-            },
-            Px2 => match a {
-                b' ' => Px3,
-                _ => Invalid,
-            },
-            Px3 => match a {
+        self.state = match (self.state, a) {
+            (Start, b'P') => Px1,
+            (Start, b'S') => Size1,
+            (Start, b'H') => Help1,
+            (Px1, b'X') => Px2,
+            (Px2, b' ') => Px3,
+            (Px3, _) => match a {
                 b'0'..=b'9' => {
                     self.x = self.x * 10 + (a - b'0') as u16;
                     if self.x < 480 {
@@ -82,7 +73,7 @@ impl Parser {
                 b' ' => Px4,
                 _ => Invalid,
             },
-            Px4 => match a {
+            (Px4, _) => match a {
                 b'0'..=b'9' => {
                     self.y = self.y * 10 + (a - b'0') as u16;
                     if self.y < 272 {
@@ -94,7 +85,7 @@ impl Parser {
                 b' ' => Px5,
                 _ => Invalid,
             },
-            Px5 => {
+            (Px5, _) => {
                 let state_after_digit = if self.color >> 31 != 0 { Px7 } else { Px5 };
                 match a {
                     b'0'..=b'9' => {
@@ -121,83 +112,47 @@ impl Parser {
                     _ => Invalid,
                 }
             }
-            Px6 => match a {
-                b'\n' => {
-                    cb.set(self.x, self.y, self.color);
-                    self.reset()
-                }
-                _ => Invalid,
-            },
-            Px7 => match a {
-                b'\r' => Px8,
-                b'\n' => {
-                    cb.blend(self.x, self.y, self.color);
-                    self.reset()
-                }
-                _ => Invalid,
-            },
-            Px8 => match a {
-                b'\n' => {
-                    cb.blend(self.x, self.y, self.color);
-                    self.reset()
-                }
-                _ => Invalid,
-            },
-            Help1 => match a {
-                b'E' => Help2,
-                _ => Invalid,
-            },
-            Help2 => match a {
-                b'L' => Help3,
-                _ => Invalid,
-            },
-            Help3 => match a {
-                b'P' => Help4,
-                _ => Invalid,
-            },
-            Help4 => match a {
-                b'\n' => {
-                    cb.help();
-                    Start
-                }
-                b'\r' => Help5,
-                _ => Invalid,
-            },
-            Help5 => match a {
-                b'\n' => {
-                    cb.help();
-                    Start
-                }
-                _ => Invalid,
-            },
-            Size1 => match a {
-                b'I' => Size2,
-                _ => Invalid,
-            },
-            Size2 => match a {
-                b'Z' => Size3,
-                _ => Invalid,
-            },
-            Size3 => match a {
-                b'E' => Size4,
-                _ => Invalid,
-            },
-            Size4 => match a {
-                b'\n' => {
-                    cb.size();
-                    Start
-                }
-                b'\r' => Help5,
-                _ => Invalid,
-            },
-            Size5 => match a {
-                b'\n' => {
-                    cb.size();
-                    Start
-                }
-                _ => Invalid,
-            },
-            Invalid => return false,
+            (Px6, b'\n') => {
+                cb.set(self.x, self.y, self.color);
+                self.reset()
+            }
+            (Px7, b'\r') => Px8,
+            (Px7, b'\n') => {
+                cb.blend(self.x, self.y, self.color);
+                self.reset()
+            }
+            (Px8, b'\n') => {
+                cb.blend(self.x, self.y, self.color);
+                self.reset()
+            }
+            (Help1, b'E') => Help2,
+            (Help2, b'L') => Help3,
+            (Help3, b'P') => Help4,
+            (Help4, b'\n') => {
+                cb.help();
+                Start
+            }
+            (Help4, b'\r') => Help5,
+            (Help5, b'\n') => {
+                cb.help();
+                Start
+            }
+            (Size1, b'I') => Size2,
+            (Size2, b'Z') => Size3,
+            (Size3, b'E') => Size4,
+            (Size4, b'\n') => {
+                cb.size();
+                Start
+            }
+            (Size4, b'\r') => Size5,
+            (Size5, b'\n') => {
+                cb.size();
+                Start
+            }
+            (Invalid, _) => {
+                return false;
+            }
+            _ => Invalid,
         };
 
         self.state != Invalid
