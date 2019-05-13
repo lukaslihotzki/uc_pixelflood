@@ -25,8 +25,8 @@ digraph statemach {
 	Px3 -> Px4 [label="' '"];
 	Px4 -> Px4 [label="'0'..'9'"] [color="red"];
 	Px4 -> Px5 [label="' '"];
-	Px5 -> Px5 [label="'0'..'9'|'a'..'f'|'A'..'F' no overflow"];
+	Px5 -> Px5 [label="'0'..'9'|'a'..'f'|'A'..'F' no overflow"] [color="red"];
 	Px5 -> Start [label="'\\n'"] [color="red"];
 	Px5 -> Px6 [label="'\\r'"];
-	Px5 -> Px7 [label="'0'..'9'|'a'..'f'|'A'..'F' overflow"];
+	Px5 -> Px7 [label="'0'..'9'|'a'..'f'|'A'..'F' overflow"] [color="red"];
 }
